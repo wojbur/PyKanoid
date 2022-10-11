@@ -1,6 +1,6 @@
-import pygame
-
 from states.state import State
+from states.options import MenuOptions
+from states.scores import HighScores
 
 class MainMenu(State):
     def __init__(self, game):
@@ -18,22 +18,9 @@ class MainMenu(State):
     
     def update(self, delta_time, keys):
         self.update_curson(keys)
-        if keys['up']:
-            print('up')
-        if keys['down']:
-            print('down')
         if keys['enter']:
             self.transition_state()
         self.game.reset_keys()
-
-    def circle_surf(self, radius, color):
-        surf = pygame.Surface((radius*2, radius*2))
-        pygame.draw.circle(surf, color, (radius, radius), radius)
-        surf.set_colorkey((0,0,0))
-        return surf
-    
-    # def text_surf(self, text, color):
-    #     surf = 
 
     def set_font(self, name, size):
         return self.game.load_font(name, size)
@@ -62,11 +49,12 @@ class MainMenu(State):
         if self.menu_options[self.index] == 'START GAME':
             pass
         if self.menu_options[self.index] == 'OPTIONS':
-            pass
+            new_state = MenuOptions(self.game)
+            new_state.enter_state()
         if self.menu_options[self.index] == 'HIGH SCORES':
-            pass
+            new_state = HighScores(self.game)
+            new_state.enter_state()
         if self.menu_options[self.index] == 'QUIT':
-            print('test')
             self.game.playing = False
             self.game.running = False
 

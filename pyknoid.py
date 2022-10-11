@@ -40,20 +40,24 @@ class Game():
                 self.running = False
             # Key down
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
-                    self.keys['enter'] = True
                 if event.key == pygame.K_UP:
                     self.keys['up'] = True
                 if event.key == pygame.K_DOWN:
                     self.keys['down'] = True
+                if event.key == pygame.K_RETURN:
+                    self.keys['enter'] = True
+                if event.key == pygame.K_ESCAPE:
+                    self.keys['escape'] = True
             
             if event.type == pygame.KEYUP:
-                if event.key == pygame.K_RETURN:
-                    self.keys['enter'] = False
                 if event.key == pygame.K_UP:
                     self.keys['up'] = False
                 if event.key == pygame.K_DOWN:
                     self.keys['down'] = False
+                if event.key == pygame.K_RETURN:
+                    self.keys['enter'] = False
+                if event.key == pygame.K_ESCAPE:
+                    self.keys['escape'] = False
     
 
     def update(self):
