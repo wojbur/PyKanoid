@@ -40,12 +40,16 @@ class Game():
                 self.running = False
             # Key down
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    self.keys['enter'] = True
                 if event.key == pygame.K_UP:
                     self.keys['up'] = True
                 if event.key == pygame.K_DOWN:
                     self.keys['down'] = True
             
             if event.type == pygame.KEYUP:
+                if event.key == pygame.K_RETURN:
+                    self.keys['enter'] = False
                 if event.key == pygame.K_UP:
                     self.keys['up'] = False
                 if event.key == pygame.K_DOWN:
@@ -73,14 +77,14 @@ class Game():
         text_rect.center = (x, y)
         surface.blit(text_surface, text_rect)
     
-
     def load_assets(self):
         # Create pointers to directiries
         self.assets_dir = PurePath('assets')
         self.sprites_dir = PurePath(self.assets_dir, 'sprites')
         self.font_dir = PurePath(self.assets_dir, 'fonts')
-
-        self.title_font = pygame.font.Font(PurePath(self.font_dir, 'FastHand-lgBMV.ttf'), 30)
+    
+    def load_font(self, name, size):
+        return pygame.font.Font(PurePath(self.font_dir, name), size)
     
     def load_states(self):
         self.main_menu = MainMenu(self)
