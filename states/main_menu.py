@@ -1,4 +1,5 @@
 from states.state import State
+from states.level import GameLevel
 from states.options import MenuOptions
 from states.scores import HighScores
 
@@ -47,7 +48,8 @@ class MainMenu(State):
     
     def transition_state(self):
         if self.menu_options[self.index] == 'START GAME':
-            pass
+            new_state = GameLevel(self.game)
+            new_state.enter_state()
         if self.menu_options[self.index] == 'OPTIONS':
             new_state = MenuOptions(self.game)
             new_state.enter_state()

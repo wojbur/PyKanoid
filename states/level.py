@@ -1,19 +1,41 @@
 import pygame
 from pathlib import PurePath
 from states.state import State
+# from states.main_menu import MainMenu
 
 class GameLevel(State):
     def __init__(self, game):
         State.__init__(self, game)
+        self.player = Player(self.game)
     
-    def update(self):
-        pass
+    def update(self, delta_time, keys):
+        # if keys['exit']:
+            # new_state = MainMenu(self.game)
+            # new_state.enter_state()
+        self.player.update(delta_time, keys)
 
     def render(self, surface):
-        pass
+        surface.fill((0, 0, 0))
+        self.player.render(surface)
 
 class Player():
-    pass
+    def __init__(self, game):
+        self.game = game
+        self.image = pygame.image.load('assets\sprites\player\paddle_1.png')
+        self.rect = self.image.get_rect()
+        self.rect.centerx = game.GAME_WIDTH/2
+        self.rect.bottom = game.GAME_HEIGHT - 50
+    
+    def update(self, delta_time, keys):
+        # Scale mouse position to the display surface
+        mouse_x = pygame.mouse.get_pos()[0] * (self.game.GAME_WIDTH / self.game.SCREEN_WIDTH)
+        self.rect.centerx = mouse_x
+        print(mouse_x)
+
+
+    def render(self, surface):
+        surface.blit(self.image, self.rect)
+        
 
 class Ball():
     pass

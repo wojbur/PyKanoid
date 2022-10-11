@@ -7,14 +7,16 @@ class Game():
     def __init__(self):
         '''Initialize the game'''
         pygame.init()
+        # Make mouse cursor invisible
+        # pygame.mouse.set_cursor((8,8),(0,0),(0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0))
         # Set up display
         self.GAME_WIDTH, self.GAME_HEIGHT = 1280, 960
-        self.SCREEN_WIDTH, self.SCREEN_HEIGHT = 1280, 960
+        self.SCREEN_WIDTH, self.SCREEN_HEIGHT = 640, 480
         self.game_canvas = pygame.Surface((self.GAME_WIDTH, self.GAME_HEIGHT))
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
         # Set up game values
         self.running, self.playing = True, True
-        self.keys = {'up': False, 'down': False, 'space': False, 'enter':False, 'escape': False}
+        self.keys = {'up': False, 'down': False, 'left': False, 'right': False, 'space': False, 'enter':False, 'escape': False}
         # Set up time values to make the game speed time dependent, not FPS dependent
         self.dt, self.prev_time = 0, 0
         # Set up game stack to contain different game states
@@ -23,6 +25,9 @@ class Game():
         self.load_assets()
         self.load_states()
 
+        self.FPS = 60
+        self.clock = pygame.time.Clock()
+
 
     def game_loop(self):
         while self.playing:
@@ -30,6 +35,7 @@ class Game():
             self.get_events()
             self.update()
             self.render()
+            self.clock.tick(self.FPS)
     
 
     def get_events(self):
@@ -44,6 +50,10 @@ class Game():
                     self.keys['up'] = True
                 if event.key == pygame.K_DOWN:
                     self.keys['down'] = True
+                if event.key == pygame.K_LEFT:
+                    self.keys['left'] = True
+                if event.key == pygame.K_RIGHT:
+                    self.keys['right'] = True
                 if event.key == pygame.K_RETURN:
                     self.keys['enter'] = True
                 if event.key == pygame.K_ESCAPE:
@@ -54,6 +64,10 @@ class Game():
                     self.keys['up'] = False
                 if event.key == pygame.K_DOWN:
                     self.keys['down'] = False
+                if event.key == pygame.K_LEFT:
+                    self.keys['left'] = False
+                if event.key == pygame.K_RIGHT:
+                    self.keys['right'] = False
                 if event.key == pygame.K_RETURN:
                     self.keys['enter'] = False
                 if event.key == pygame.K_ESCAPE:
