@@ -21,16 +21,22 @@ class GameLevel(State):
 class Player():
     def __init__(self, game):
         self.game = game
-        self.image = pygame.image.load('assets\sprites\player\paddle_1.png')
+        self.image = pygame.image.load(PurePath(game.sprites_dir, 'player', 'paddle_1.png'))
         self.rect = self.image.get_rect()
         self.rect.centerx = game.GAME_WIDTH/2
-        self.rect.bottom = game.GAME_HEIGHT - 50
+        self.rect.bottom = game.GAME_HEIGHT - 14
+
+        self.width = self.rect[2]
     
     def update(self, delta_time, keys):
         # Scale mouse position to the display surface
         mouse_x = pygame.mouse.get_pos()[0] * (self.game.GAME_WIDTH / self.game.SCREEN_WIDTH)
         self.rect.centerx = mouse_x
-        print(mouse_x)
+        if self.rect.left < 0:
+            self.rect.left = 0
+        elif self.rect.right > self.game.GAME_WIDTH:
+            self.rect.right = self.game.GAME_WIDTH
+        print(self.rect)
 
 
     def render(self, surface):
