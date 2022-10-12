@@ -8,7 +8,7 @@ class Game():
         '''Initialize the game'''
         pygame.init()
         # Make mouse cursor invisible
-        # pygame.mouse.set_cursor((8,8),(0,0),(0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0))
+        pygame.mouse.set_cursor((8,8),(0,0),(0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0))
         # Set up display
         self.GAME_WIDTH, self.GAME_HEIGHT = 1280, 960
         self.SCREEN_WIDTH, self.SCREEN_HEIGHT = 1280, 960
@@ -25,18 +25,12 @@ class Game():
         self.load_assets()
         self.load_states()
 
-        self.FPS = 60
-        self.clock = pygame.time.Clock()
-
-
     def game_loop(self):
         while self.playing:
             self.get_dt()
             self.get_events()
             self.update()
             self.render()
-            self.clock.tick(self.FPS)
-    
 
     def get_events(self):
         for event in pygame.event.get():

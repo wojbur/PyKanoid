@@ -28,15 +28,15 @@ class MainMenu(State):
 
     def render(self, surface):
         surface.fill((0, 0, 0))
-        self.game.draw_text(surface, self.menu_choose_font1, self.menu_options[self.index], (30, 0, 0), self.game.GAME_WIDTH/2, self.game.GAME_HEIGHT/2 - 90 + self.index*60)
-        self.game.draw_text(surface, self.title_font1, 'PYKANOID', (30, 0, 0), self.game.GAME_WIDTH/2, 100)
+        self.game.draw_text(surface, self.menu_choose_font1, self.menu_options[self.index], (127, 112, 138), self.game.GAME_WIDTH/2, self.game.GAME_HEIGHT/2 - 90 + self.index*60)
+        self.game.draw_text(surface, self.title_font1, 'PYKANOID', (127, 112, 138), self.game.GAME_WIDTH/2, 100)
         self.game.draw_text(surface, self.title_font2, 'PYKANOID', (255, 255, 255), self.game.GAME_WIDTH/2, 100)
-        self.game.draw_text(surface, self.title_font3, 'PYKANOID', (0, 130, 230), self.game.GAME_WIDTH/2, 100)
+        self.game.draw_text(surface, self.title_font3, 'PYKANOID', (77, 155, 230), self.game.GAME_WIDTH/2, 100)
         self.game.draw_text(surface, self.menu_font, 'START GAME', (255, 255, 255), self.game.GAME_WIDTH/2, self.game.GAME_HEIGHT/2 - 90)
         self.game.draw_text(surface, self.menu_font, 'OPTIONS', (255, 255, 255), self.game.GAME_WIDTH/2, self.game.GAME_HEIGHT/2 - 30)
         self.game.draw_text(surface, self.menu_font, 'HIGH SCORES', (255, 255, 255), self.game.GAME_WIDTH/2, self.game.GAME_HEIGHT/2 + 30)
         self.game.draw_text(surface, self.menu_font, 'QUIT', (255, 255, 255), self.game.GAME_WIDTH/2, self.game.GAME_HEIGHT/2 + 90)
-        self.game.draw_text(surface, self.menu_choose_font2, self.menu_options[self.index], (0, 130, 230), self.game.GAME_WIDTH/2, self.game.GAME_HEIGHT/2 - 90 + self.index*60)
+        self.game.draw_text(surface, self.menu_choose_font2, self.menu_options[self.index], (77, 155, 230), self.game.GAME_WIDTH/2, self.game.GAME_HEIGHT/2 - 90 + self.index*60)
         # surface.blit(self.circle_surf(200, (20, 20, 20)), (200,200), special_flags=pygame.BLEND_RGB_ADD)
         # surface.blit(self.circle_surf(150, (30, 0, 0)), (200,200), special_flags=pygame.BLEND_RGB_ADD)
     
