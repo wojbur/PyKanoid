@@ -10,8 +10,16 @@ vector = pygame.math.Vector2
 class GameLevel(State):
     def __init__(self, game):
         State.__init__(self, game)
-        self.player = Player(self.game)
-        self.ball = Ball(self.game, game.GAME_WIDTH/2, game.GAME_HEIGHT/2, PI*1.4)
+
+        # Define sprite groups
+        self.player_group = pygame.sprite.Group()
+        self.ball_group = pygame.sprite.Group()
+        self.block_group = pygame.sprite.Group()
+
+        # Initialize player and ball objects
+        self.player = Player(self.game, self)
+        self.ball = Ball(self.game, self, game.GAME_WIDTH/2, game.GAME_HEIGHT/2, 0)
+
     
     def update(self, delta_time, keys):
         if keys['escape']:
@@ -26,12 +34,17 @@ class GameLevel(State):
         self.ball.render(surface)
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, game):
+    def __init__(self, game, level):
+        super().__init__()
         self.game = game
+        self.level = level
+
         self.image = pygame.image.load(PurePath(game.sprites_dir, 'player', 'paddle.png'))
         self.rect = self.image.get_rect()
         self.rect.centerx = game.GAME_WIDTH/2
         self.rect.bottom = game.GAME_HEIGHT - 14
+
+        self.level.player_group.add(self)
 
         self.width = self.rect[2]
     
@@ -49,8 +62,11 @@ class Player(pygame.sprite.Sprite):
         
 
 class Ball(pygame.sprite.Sprite):
-    def __init__(self, game, x, y, angle):
+    def __init__(self, game, level, x, y, angle):
+        super().__init__()
         self.game = game
+        self.level = level
+
         self.image = pygame.image.load(PurePath(game.sprites_dir, 'ball', 'ball.png'))
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
@@ -65,9 +81,20 @@ class Ball(pygame.sprite.Sprite):
         self.position += self.velocity * delta_time
         self.rect.center = self.position
         self.bounce()
+        self.player_colide()
 
     def render(self, surface):
         surface.blit(self.image, self.rect)
+    
+    def player_colide(self):
+        if pygame.sprite.spritecollide(self, self.level.player_group, False):
+            self.velocity[1] *= -1
+            print(f'ball_x: {self.rect.centerx}')
+            print(f'player_x: {self.level.player.rect.centerx}')
+            print(f'difference: {self.level.player.rect.centerx - self.rect.centerx}')
+
+            self.angle = PI + PI * (self.level.player.rect.centerx - self.rect.centerx)/self.level.player.width
+            self.velocity = vector(sin(self.angle)*self.speed, cos(self.angle)*self.speed)
     
     def bounce(self):
         if self.rect.right >= self.game.GAME_WIDTH or self.rect.left <= 0:
