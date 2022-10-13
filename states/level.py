@@ -88,12 +88,16 @@ class Ball(pygame.sprite.Sprite):
     
     def player_colide(self):
         if pygame.sprite.spritecollide(self, self.level.player_group, False):
-            self.velocity[1] *= -1
-            print(f'ball_x: {self.rect.centerx}')
-            print(f'player_x: {self.level.player.rect.centerx}')
-            print(f'difference: {self.level.player.rect.centerx - self.rect.centerx}')
+            ball_x = self.rect.centerx
+            player_x = self.level.player.rect.centerx
+            player_width = self.level.player.width
 
-            self.angle = PI + PI * (self.level.player.rect.centerx - self.rect.centerx)/self.level.player.width
+            # Set new ball angle depending on collide position - the closer to player center the more vertical the angle
+            # The 0.8 is there to ensure min bounce angle is 18deg so that the ball don't bounce too horizontally
+            self.angle = PI + 0.8 * PI * (player_x - ball_x)/player_width
+
+            # Set new ball velocity
+            self.velocity[1] *= -1
             self.velocity = vector(sin(self.angle)*self.speed, cos(self.angle)*self.speed)
     
     def bounce(self):
