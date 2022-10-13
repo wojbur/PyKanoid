@@ -11,7 +11,7 @@ class GameLevel(State):
     def __init__(self, game):
         State.__init__(self, game)
         self.player = Player(self.game)
-        self.ball = Ball(self.game, game.GAME_WIDTH/2, game.GAME_HEIGHT/2)
+        self.ball = Ball(self.game, game.GAME_WIDTH/2, game.GAME_HEIGHT/2, PI*1.4)
     
     def update(self, delta_time, keys):
         if keys['escape']:
@@ -25,7 +25,7 @@ class GameLevel(State):
         self.player.render(surface)
         self.ball.render(surface)
 
-class Player():
+class Player(pygame.sprite.Sprite):
     def __init__(self, game):
         self.game = game
         self.image = pygame.image.load(PurePath(game.sprites_dir, 'player', 'paddle.png'))
@@ -48,14 +48,14 @@ class Player():
         surface.blit(self.image, self.rect)
         
 
-class Ball():
-    def __init__(self, game, x, y):
+class Ball(pygame.sprite.Sprite):
+    def __init__(self, game, x, y, angle):
         self.game = game
         self.image = pygame.image.load(PurePath(game.sprites_dir, 'ball', 'ball.png'))
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
         self.speed = 400
-        self.angle = 0.25*PI
+        self.angle = angle
 
         # Kinematic vectors
         self.position = vector(x, y)
@@ -64,9 +64,16 @@ class Ball():
     def update(self, delta_time, keys):
         self.position += self.velocity * delta_time
         self.rect.center = self.position
+        self.bounce()
 
     def render(self, surface):
         surface.blit(self.image, self.rect)
+    
+    def bounce(self):
+        if self.rect.right >= self.game.GAME_WIDTH or self.rect.left <= 0:
+            self.velocity[0] *= -1
+        if self.rect.top <= 0:
+            self.velocity[1] *= -1
 
 
         

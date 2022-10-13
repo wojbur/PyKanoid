@@ -7,7 +7,7 @@ class Game():
     def __init__(self):
         '''Initialize the game'''
         pygame.init()
-        # Make mouse cursor invisible
+        # Make mouse cursor invisible and lock it in screen boundaries
         pygame.mouse.set_cursor((8,8),(0,0),(0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0))
         # Set up display
         self.GAME_WIDTH, self.GAME_HEIGHT = 1280, 960
@@ -33,6 +33,9 @@ class Game():
             self.render()
 
     def get_events(self):
+        # Lock the mouse inside game boundaries
+        pygame.event.set_grab(True)
+        
         for event in pygame.event.get():
             # Check if the user wants to quit
             if event.type == pygame.QUIT:
