@@ -1,9 +1,11 @@
-from platform import python_branch
 import pygame
 from pathlib import PurePath
-from states.state import State
 from math import cos, sin
 from math import pi as PI
+from csv import reader
+
+from states.state import State
+
 
 vector = pygame.math.Vector2
 # from states.main_menu import MainMenu
@@ -19,8 +21,19 @@ class GameLevel(State):
 
         # Initialize player and ball objects
         self.player = Player(self.game, self)
-        self.ball = Ball(self.game, self, game.GAME_WIDTH/2, game.GAME_HEIGHT/2, 1.6*PI)
-        self.block = Block(self.game, self, game.GAME_WIDTH/2-200, game.GAME_HEIGHT/2+40)
+        self.ball = Ball(self.game, self, game.GAME_WIDTH/2, game.GAME_HEIGHT/2, 0)
+        # self.block = Block(self.game, self, 40, 80)
+
+        # Load level layout
+        with open(PurePath('stages.csv')) as file:
+            csv_reader = reader(file, delimiter=";")
+            self.stage_layout = list(csv_reader)
+        
+        # Create blocks grid
+        for i in range(len(self.stage_layout)):
+            for j in range(len(self.stage_layout[i])):
+                if self.stage_layout[i][j]:
+                    Block(self.game, self, 40+j*60, 80+i*30)
 
     
     def update(self, delta_time, keys):
@@ -34,7 +47,7 @@ class GameLevel(State):
         surface.fill((0, 0, 0))
         self.player.render(surface)
         self.ball.render(surface)
-        self.block.render(surface)
+        self.block_group.draw(surface)
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, game, level):
@@ -106,7 +119,7 @@ class Ball(pygame.sprite.Sprite):
     
     def block_collide(self):
         collision_tolerance = 4
-        collided_block = pygame.sprite.spritecollide(self, self.level.block_group, False)
+        collided_block = pygame.sprite.spritecollide(self, self.level.block_group, True)
         if collided_block:
 
             # Collision from the bottom
