@@ -19,8 +19,8 @@ class GameLevel(State):
 
         # Initialize player and ball objects
         self.player = Player(self.game, self)
-        self.ball = Ball(self.game, self, game.GAME_WIDTH/2, game.GAME_HEIGHT/2, 1.25*PI)
-        self.block = Block(self.game, self, game.GAME_WIDTH/2-100, game.GAME_HEIGHT/2-100)
+        self.ball = Ball(self.game, self, game.GAME_WIDTH/2, game.GAME_HEIGHT/2, 1.6*PI)
+        self.block = Block(self.game, self, game.GAME_WIDTH/2-200, game.GAME_HEIGHT/2+40)
 
     
     def update(self, delta_time, keys):
@@ -105,14 +105,26 @@ class Ball(pygame.sprite.Sprite):
             self.velocity = vector(sin(self.angle)*self.speed, cos(self.angle)*self.speed)
     
     def block_collide(self):
-        collision_tolerance = 3
+        collision_tolerance = 4
         collided_block = pygame.sprite.spritecollide(self, self.level.block_group, False)
         if collided_block:
-            if abs(collided_block[0].rect.bottom - self.rect.top) < collision_tolerance or abs(collided_block[0].rect.top - self.rect.bottom < collision_tolerance):
+
+            # Collision from the bottom
+            if abs(collided_block[0].rect.bottom - self.rect.top) < collision_tolerance and self.velocity[1] < 0:
+                print('bottom')
                 self.velocity[1] *= -1
-            if abs(collided_block[0].rect.right - self.rect.left) < collision_tolerance or abs(collided_block[0].rect.left - self.rect.right < collision_tolerance):
+            # Collision from the top
+            if abs(collided_block[0].rect.top - self.rect.bottom) < collision_tolerance and self.velocity[1] > 0:
+                print('top')
+                self.velocity[1] *= -1
+            # Collision from the left
+            if abs(collided_block[0].rect.left - self.rect.right) < collision_tolerance and self.velocity[0] > 0:
+                print('left')
                 self.velocity[0] *= -1
-            
+            # Collision from the right
+            if abs(collided_block[0].rect.right - self.rect.left) < collision_tolerance and self.velocity[0] < 0:
+                print('right')
+                self.velocity[0] *= -1
             
 
     def bounce(self):
