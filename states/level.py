@@ -131,26 +131,31 @@ class Ball(pygame.sprite.Sprite):
     
     def block_collide(self):
         collision_tolerance = 4
-        collided_block = pygame.sprite.spritecollide(self, self.level.block_group, True)
-        if collided_block:
+        collided_blocks = pygame.sprite.spritecollide(self, self.level.block_group, False)
+        if collided_blocks:
             self.level.hit_block_sound.play()
 
             # Collision from the bottom
-            if abs(collided_block[0].rect.bottom - self.rect.top) < collision_tolerance and self.velocity[1] < 0:
+            if abs(collided_blocks[0].rect.bottom - self.rect.top) < collision_tolerance and self.velocity[1] < 0:
                 print('bottom')
                 self.velocity[1] *= -1
             # Collision from the top
-            if abs(collided_block[0].rect.top - self.rect.bottom) < collision_tolerance and self.velocity[1] > 0:
+            if abs(collided_blocks[0].rect.top - self.rect.bottom) < collision_tolerance and self.velocity[1] > 0:
                 print('top')
                 self.velocity[1] *= -1
             # Collision from the left
-            if abs(collided_block[0].rect.left - self.rect.right) < collision_tolerance and self.velocity[0] > 0:
+            if abs(collided_blocks[0].rect.left - self.rect.right) < collision_tolerance and self.velocity[0] > 0:
                 print('left')
                 self.velocity[0] *= -1
             # Collision from the right
-            if abs(collided_block[0].rect.right - self.rect.left) < collision_tolerance and self.velocity[0] < 0:
+            if abs(collided_blocks[0].rect.right - self.rect.left) < collision_tolerance and self.velocity[0] < 0:
                 print('right')
                 self.velocity[0] *= -1
+
+            # Ensure only one block at the time is destroyed        
+            collided_blocks[0].kill()
+            
+
             
     def wall_collide(self):
         if self.rect.right >= self.game.GAME_WIDTH or self.rect.left <= 0:
