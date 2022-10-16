@@ -1,3 +1,4 @@
+from turtle import st
 import pygame
 from pathlib import PurePath
 from math import cos, sin
@@ -18,22 +19,26 @@ class GameLevel(State):
         self.player_group = pygame.sprite.Group()
         self.ball_group = pygame.sprite.Group()
         self.block_group = pygame.sprite.Group()
+        self.stage = 2
 
         # Initialize player and ball objects
         self.player = Player(self.game, self)
-        self.ball = Ball(self.game, self, game.GAME_WIDTH/2, game.GAME_HEIGHT/2, 0)
+        self.ball = Ball(self.game, self, self.player.rect.centerx, self.player.rect.top-3, PI)
         # self.block = Block(self.game, self, 40, 80)
 
         # Load level layout
-        with open(PurePath('stages.csv')) as file:
+        with open(PurePath('stages', 'standard_set.csv')) as file:
             csv_reader = reader(file, delimiter=";")
-            self.stage_layout = list(csv_reader)
+            stage_layouts = list(csv_reader)
+            start_row = self.stage + (self.stage-1)*20
+            end_row = start_row + 20
+            self.stage_layout = stage_layouts[start_row:end_row]
         
         # Create blocks grid
         for i in range(len(self.stage_layout)):
             for j in range(len(self.stage_layout[i])):
                 if self.stage_layout[i][j]:
-                    Block(self.game, self, 40+j*60, 80+i*30)
+                    Block(self.game, self, self.stage_layout[i][j], 40+j*60, 80+i*30)
 
     
     def update(self, delta_time, keys):
@@ -148,12 +153,13 @@ class Ball(pygame.sprite.Sprite):
 
 
 class Block(pygame.sprite.Sprite):
-    def __init__(self, game, level, x, y):
+    def __init__(self, game, level, code, x, y):
         super().__init__()
         self.game = game
         self.level = level
+        self.code = code
 
-        self.image = pygame.image.load(PurePath(game.sprites_dir, 'blocks', 's1.png'))
+        self.image = pygame.image.load(PurePath(game.sprites_dir, 'blocks', f'{self.code}.png'))
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
 
