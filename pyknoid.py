@@ -31,6 +31,7 @@ class Game():
             self.get_events()
             self.update()
             self.render()
+            # print(1/self.dt) # FPS count for performance testing
 
     def get_events(self):
         # Lock the mouse inside game boundaries
