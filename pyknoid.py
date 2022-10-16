@@ -97,6 +97,7 @@ class Game():
         self.assets_dir = PurePath('assets')
         self.sprites_dir = PurePath(self.assets_dir, 'sprites')
         self.font_dir = PurePath(self.assets_dir, 'fonts')
+        self.sounds_dir = PurePath(self.assets_dir, 'sounds')
     
     def load_font(self, name, size):
         return pygame.font.Font(PurePath(self.font_dir, name), size)

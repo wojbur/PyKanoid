@@ -19,14 +19,15 @@ class GameLevel(State):
         self.player_group = pygame.sprite.Group()
         self.ball_group = pygame.sprite.Group()
         self.block_group = pygame.sprite.Group()
-        self.stage = 2
 
         # Initialize player and ball objects
         self.player = Player(self.game, self)
-        self.ball = Ball(self.game, self, self.player.rect.centerx, self.player.rect.top-3, PI)
+        self.ball = Ball(self.game, self, self.player.rect.centerx, self.player.rect.top-3, 0.9*PI, 400)
         # self.block = Block(self.game, self, 40, 80)
 
-        # Load level layout
+        # Load stage layout
+        self.stage = 1
+
         with open(PurePath('stages', 'standard_set.csv')) as file:
             csv_reader = reader(file, delimiter=";")
             stage_layouts = list(csv_reader)
@@ -39,6 +40,11 @@ class GameLevel(State):
             for j in range(len(self.stage_layout[i])):
                 if self.stage_layout[i][j]:
                     Block(self.game, self, self.stage_layout[i][j], 40+j*60, 80+i*30)
+        
+        # Load sounds
+        self.bounce_sound = pygame.mixer.Sound(PurePath(game.sounds_dir, 'bounce.wav'))
+        self.hit_block_sound = pygame.mixer.Sound(PurePath(game.sounds_dir, 'hit_block.wav'))
+        self.hit_wall_sound = pygame.mixer.Sound(PurePath(game.sounds_dir, 'hit_wall.wav'))
 
     
     def update(self, delta_time, keys):
@@ -83,7 +89,7 @@ class Player(pygame.sprite.Sprite):
         
 
 class Ball(pygame.sprite.Sprite):
-    def __init__(self, game, level, x, y, angle):
+    def __init__(self, game, level, x, y, angle, speed):
         super().__init__()
         self.game = game
         self.level = level
@@ -91,7 +97,7 @@ class Ball(pygame.sprite.Sprite):
         self.image = pygame.image.load(PurePath(game.sprites_dir, 'ball', 'ball.png'))
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
-        self.speed = 400
+        self.speed = speed
         self.angle = angle
 
         # Kinematic vectors
@@ -101,7 +107,7 @@ class Ball(pygame.sprite.Sprite):
     def update(self, delta_time, keys):
         self.position += self.velocity * delta_time
         self.rect.center = self.position
-        self.bounce()
+        self.wall_collide()
         self.player_collide()
         self.block_collide()
 
@@ -110,6 +116,7 @@ class Ball(pygame.sprite.Sprite):
     
     def player_collide(self):
         if pygame.sprite.spritecollide(self, self.level.player_group, False):
+            self.level.bounce_sound.play()
             ball_x = self.rect.centerx
             player_x = self.level.player.rect.centerx
             player_width = self.level.player.width
@@ -126,6 +133,7 @@ class Ball(pygame.sprite.Sprite):
         collision_tolerance = 4
         collided_block = pygame.sprite.spritecollide(self, self.level.block_group, True)
         if collided_block:
+            self.level.hit_block_sound.play()
 
             # Collision from the bottom
             if abs(collided_block[0].rect.bottom - self.rect.top) < collision_tolerance and self.velocity[1] < 0:
@@ -144,11 +152,12 @@ class Ball(pygame.sprite.Sprite):
                 print('right')
                 self.velocity[0] *= -1
             
-
-    def bounce(self):
+    def wall_collide(self):
         if self.rect.right >= self.game.GAME_WIDTH or self.rect.left <= 0:
+            self.level.hit_wall_sound.play()
             self.velocity[0] *= -1
         if self.rect.top <= 0:
+            self.level.hit_wall_sound.play()
             self.velocity[1] *= -1
 
 
