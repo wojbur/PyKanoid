@@ -1,3 +1,6 @@
+import pygame
+from pathlib import PurePath
+
 from states.state import State
 from states.level import GameLevel
 from states.options import MenuOptions
@@ -16,6 +19,8 @@ class MainMenu(State):
         self.menu_font = self.set_font('PilotCommand-3zn93.ttf', 50)
         self.menu_choose_font1 = self.set_font('PilotCommand-3zn93.ttf', 48)
         self.menu_choose_font2 = self.set_font('PilotCommand-3zn93.ttf', 51)
+
+        self.menu_blip = pygame.mixer.Sound(PurePath(self.game.sounds_dir, 'menu_blip.wav'))
     
     def update(self, delta_time, keys):
         self.update_curson(keys)
@@ -42,8 +47,10 @@ class MainMenu(State):
     
     def update_curson(self, keys):
         if keys['down']:
+            self.menu_blip.play()
             self.index = (self.index + 1) % len(self.menu_options)
         if keys['up']:
+            self.menu_blip.play()
             self.index = (self.index - 1) % len(self.menu_options)
     
     def transition_state(self):
