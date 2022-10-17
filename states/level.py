@@ -22,10 +22,10 @@ class GameLevel(State):
         # Initialize player and ball objects
         self.player = Player(self.game, self)
         self.ball = Ball(self.game, self, self.player.rect.centerx, self.player.rect.top, PI, 400)
-        # self.block = Block(self.game, self, 40, 80)
-
         # Load stage layout
         self.stage = 2
+
+        self.is_paused = False
 
         with open(PurePath('stages', 'standard_set.csv')) as file:
             csv_reader = reader(file, delimiter=";")
@@ -44,22 +44,47 @@ class GameLevel(State):
         self.bounce_sound = pygame.mixer.Sound(PurePath(game.sounds_dir, 'bounce.wav'))
         self.hit_block_sound = pygame.mixer.Sound(PurePath(game.sounds_dir, 'hit_block.wav'))
         self.hit_wall_sound = pygame.mixer.Sound(PurePath(game.sounds_dir, 'hit_wall.wav'))
+        self.lose_live_sound = pygame.mixer.Sound(PurePath(game.sounds_dir, 'lose_live.wav'))
   
     def update(self, delta_time, keys):
-        if keys['escape']:
-            self.exit_state()
-        self.player.update(delta_time, keys)
-        self.ball.update(delta_time, keys)
-        self.game.reset_keys()
+        # test spawning multiple balls
+        if keys['up']:
+            self.spawn_ball(self.player.rect.centerx, self.player.rect.top, PI, 400)
+
+        if self.is_paused:
+            if keys['escape']:
+                self.exit_state()
+            if keys['enter']:
+                self.reset()
+                self.is_paused = False
+        else:
+            if keys['escape']:
+                self.exit_state()
+            self.player.update(delta_time, keys)
+            self.ball_group.update(delta_time, keys)
+            self.game.reset_keys()
 
     def render(self, surface):
         surface.fill((0, 0, 0))
-        self.player.render(surface)
-        self.ball.render(surface)
+        self.player_group.draw(surface)
+        self.ball_group.draw(surface)
         self.block_group.draw(surface)
     
-    def pause_game(self):
-        pass
+    def lose_live(self):
+        if self.player.lives == 0:
+            self.game_over()
+        else:
+            self.lose_live_sound.play()
+            self.is_paused = True
+            self.player.lives -= 1
+    
+    def spawn_ball(self, x, y, angle, speed):
+        print('spawn ballz')
+        ball2 = Ball(self.game, self, x, y, angle, speed)
+    
+    def reset(self):
+        self.player.is_magnetic = True
+        self.ball2 = Ball(self.game, self, self.player.rect.centerx, self.player.rect.top, PI, 400)
 
     def game_over(self):
         pass
@@ -77,10 +102,10 @@ class Player(pygame.sprite.Sprite):
         self.is_magnetic = True
 
         # Set player sprite and position
-        self.image = pygame.image.load(PurePath(game.sprites_dir, 'player', 'paddle.png'))
+        self.image = pygame.image.load(PurePath(self.game.sprites_dir, 'player', 'paddle.png'))
         self.rect = self.image.get_rect()
-        self.rect.centerx = game.GAME_WIDTH/2
-        self.rect.bottom = game.GAME_HEIGHT - 14
+        self.rect.centerx = self.game.GAME_WIDTH/2
+        self.rect.bottom = self.game.GAME_HEIGHT - 14
 
         # Add player to player sprite group
         self.level.player_group.add(self)
@@ -116,6 +141,9 @@ class Ball(pygame.sprite.Sprite):
         self.speed = speed
         self.angle = angle
 
+        # Add the ball to player sprite group
+        self.level.ball_group.add(self)
+
         # Kinematic vectors
         self.position = vector(x, y)
         self.velocity = vector(sin(self.angle)*self.speed, cos(self.angle)*self.speed)
@@ -131,7 +159,7 @@ class Ball(pygame.sprite.Sprite):
             self.wall_collide()
             self.player_collide()
             self.block_collide()
-            # self.check_crash()
+            self.crash()
 
     def render(self, surface):
         surface.blit(self.image, self.rect)
@@ -192,13 +220,12 @@ class Ball(pygame.sprite.Sprite):
             self.level.hit_wall_sound.play()
             self.velocity[1] = abs(self.velocity[1])
     
-    # def check_crash(self):
-    #     if self.rect.top > self.game.GAME_HEIGHT+20:
-    #         if self.level.player.lives > 0:
-    #             self.level.player.lives -= 1
-    #             self.level.pause_game()
-    #         else:
-    #             self.level.game_over()
+    def crash(self):
+        if self.rect.top > self.game.GAME_HEIGHT+20:
+            self.kill()
+            if len(self.level.ball_group) == 0:
+                self.level.lose_live()
+
 
 
 
