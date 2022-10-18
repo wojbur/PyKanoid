@@ -14,38 +14,43 @@ class GameLevel(State):
     def __init__(self, game):
         State.__init__(self, game)
 
+        self.game = game
+        
+        self.stage = 2
+        self.lives = 2
+        self.score = 0
+        self.is_paused = False
+
         # Define sprite groups
         self.player_group = pygame.sprite.Group()
         self.ball_group = pygame.sprite.Group()
         self.block_group = pygame.sprite.Group()
 
-        # Initialize player and ball objects
+        # Initialize player, ball and blocks objects
         self.player = Player(self.game, self)
         self.ball = Ball(self.game, self, self.player.rect.centerx, self.player.rect.top, PI, 400)
-        # Load stage layout
-        self.stage = 2
+        self.create_block_grid(self.stage)
 
-        self.is_paused = False
-
-        with open(PurePath('stages', 'standard_set.csv')) as file:
-            csv_reader = reader(file, delimiter=";")
-            stage_layouts = list(csv_reader)
-            start_row = self.stage + (self.stage-1)*20
-            end_row = start_row + 20
-            self.stage_layout = stage_layouts[start_row:end_row]
-        
-        # Create blocks grid
-        for i in range(len(self.stage_layout)):
-            for j in range(len(self.stage_layout[i])):
-                if self.stage_layout[i][j]:
-                    Block(self.game, self, self.stage_layout[i][j], 40+j*60, 80+i*30)
-        
         # Load sounds
-        self.bounce_sound = pygame.mixer.Sound(PurePath(game.sounds_dir, 'bounce.wav'))
-        self.hit_block_sound = pygame.mixer.Sound(PurePath(game.sounds_dir, 'hit_block.wav'))
-        self.hit_wall_sound = pygame.mixer.Sound(PurePath(game.sounds_dir, 'hit_wall.wav'))
-        self.lose_live_sound = pygame.mixer.Sound(PurePath(game.sounds_dir, 'lose_live.wav'))
-  
+        self.bounce_sound = pygame.mixer.Sound(PurePath(self.game.sounds_dir, 'bounce.wav'))
+        self.hit_block_sound = pygame.mixer.Sound(PurePath(self.game.sounds_dir, 'hit_block.wav'))
+        self.hit_wall_sound = pygame.mixer.Sound(PurePath(self.game.sounds_dir, 'hit_wall.wav'))
+        self.lose_live_sound = pygame.mixer.Sound(PurePath(self.game.sounds_dir, 'lose_live.wav'))
+
+        # Load HUD images
+        self.sidebar = pygame.image.load(PurePath(self.game.sprites_dir, 'other', 'sidebar.png'))
+
+        self.sidebar_l_rect = self.sidebar.get_rect()
+        self.sidebar_l_rect.topleft = (0, 0)
+
+        self.sidebar_r_rect = self.sidebar.get_rect()
+        self.sidebar_r_rect.topright = (self.game.GAME_WIDTH, 0)
+
+        self.live_indicator = pygame.image.load(PurePath(self.game.sprites_dir, 'other', 'live_indicator.png'))
+
+        self.hud_font = self.game.load_font('PilotCommand-3zn93.ttf', 60)
+        
+
     def update(self, delta_time, keys):
         # test spawning multiple balls
         if keys['up']:
@@ -69,44 +74,70 @@ class GameLevel(State):
         self.player_group.draw(surface)
         self.ball_group.draw(surface)
         self.block_group.draw(surface)
+        self.display_hud(surface)
+    
+    def create_block_grid(self, stage):
+        # Load stage set CSV file
+        with open(PurePath('stages', 'standard_set.csv')) as file:
+            csv_reader = reader(file, delimiter=";")
+            stage_layouts = list(csv_reader)
+            start_row = stage + (stage-1)*20
+            end_row = start_row + 20
+            stage_layout = stage_layouts[start_row:end_row]
+        # Create blocks grid
+        for i in range(len(stage_layout)):
+            for j in range(len(stage_layout[i])):
+                if stage_layout[i][j]:
+                    Block(self.game, self, stage_layout[i][j], 40+j*60, 80+i*30)
     
     def lose_live(self):
-        if self.player.lives == 0:
+        if self.lives == 0:
             self.game_over()
         else:
             self.lose_live_sound.play()
             self.is_paused = True
-            self.player.lives -= 1
+            self.lives -= 1
     
     def spawn_ball(self, x, y, angle, speed):
         print('spawn ballz')
-        ball2 = Ball(self.game, self, x, y, angle, speed)
+        Ball(self.game, self, x, y, angle, speed)
     
     def reset(self):
         self.player.is_magnetic = True
         self.ball2 = Ball(self.game, self, self.player.rect.centerx, self.player.rect.top, PI, 400)
+    
+    def display_hud(self, surface):
+        score_text = self.hud_font.render(f'{self.score}', True, (255, 255, 255))
+        score_rect = score_text.get_rect()
+        score_rect.topleft = (50, 10)
+        surface.blit(score_text, score_rect)
+
+        surface.blit(self.sidebar, self.sidebar_l_rect)
+        surface.blit(self.sidebar, self.sidebar_r_rect)
+
+        for i in range(self.lives):
+            live_indicator_rect = self.live_indicator.get_rect()
+            live_indicator_rect.topright = (self.game.GAME_WIDTH-50-i*82, 10)
+            surface.blit(self.live_indicator, live_indicator_rect)
+        
 
     def game_over(self):
-        pass
+        # Temporary, for testing
+        self.exit_state()
+
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, game, level):
         super().__init__()
         self.game = game
         self.level = level
-
-        # Set player initial values
-        self.lives = 2
-    
         # Make the ball stick to the paddle at the begining of each game
         self.is_magnetic = True
-
         # Set player sprite and position
         self.image = pygame.image.load(PurePath(self.game.sprites_dir, 'player', 'paddle.png'))
         self.rect = self.image.get_rect()
         self.rect.centerx = self.game.GAME_WIDTH/2
         self.rect.bottom = self.game.GAME_HEIGHT - 14
-
         # Add player to player sprite group
         self.level.player_group.add(self)
     
@@ -114,15 +145,14 @@ class Player(pygame.sprite.Sprite):
         # Scale mouse position to the display surface
         mouse_x = pygame.mouse.get_pos()[0] * (self.game.GAME_WIDTH / self.game.SCREEN_WIDTH)
         self.rect.centerx = mouse_x
-        if self.rect.left < 0:
-            self.rect.left = 0
-        elif self.rect.right > self.game.GAME_WIDTH:
-            self.rect.right = self.game.GAME_WIDTH
-        
+        if self.rect.left < 40:
+            self.rect.left = 40
+        elif self.rect.right > self.game.GAME_WIDTH-40:
+            self.rect.right = self.game.GAME_WIDTH-40
+        # Demagnetize paddle to start game     
         if self.is_magnetic:
             if pygame.mouse.get_pressed()[0]:
                 self.is_magnetic = False
-
 
     def render(self, surface):
         surface.blit(self.image, self.rect)
@@ -192,28 +222,28 @@ class Ball(pygame.sprite.Sprite):
             # Collision from the bottom
             if abs(collided_blocks[0].rect.bottom - self.rect.top) < collision_tolerance and self.velocity[1] < 0:
                 self.velocity[1] = abs(self.velocity[1])
-                collided_blocks[0].kill()
+                collided_blocks[0].get_hit()
             # Collision from the top
             if abs(collided_blocks[0].rect.top - self.rect.bottom) < collision_tolerance and self.velocity[1] > 0:
                 self.velocity[1] = -abs(self.velocity[1])
-                collided_blocks[0].kill()
+                collided_blocks[0].get_hit()
             # Collision from the left
             if abs(collided_blocks[0].rect.left - self.rect.right) < collision_tolerance and self.velocity[0] > 0:
 
                 self.velocity[0] = -abs(self.velocity[0])
-                collided_blocks[0].kill()
+                collided_blocks[0].get_hit()
             # Collision from the right
             if abs(collided_blocks[0].rect.right - self.rect.left) < collision_tolerance and self.velocity[0] < 0:
                 self.velocity[0] = abs(self.velocity[0])
-                collided_blocks[0].kill()
+                collided_blocks[0].get_hit()
   
             
     def wall_collide(self):
         # Check both ball position and direction to ensure no multiple collision detections occur
-        if self.rect.right >= self.game.GAME_WIDTH and self.velocity[0] > 0:
+        if self.rect.right >= self.game.GAME_WIDTH-40 and self.velocity[0] > 0:
             self.level.hit_wall_sound.play()
             self.velocity[0] = -abs(self.velocity[0])
-        if self.rect.left <= 0 and self.velocity[0] < 0:
+        if self.rect.left <= 40 and self.velocity[0] < 0:
             self.level.hit_wall_sound.play()
             self.velocity[0] = abs(self.velocity[0])
         if self.rect.top <= 0 and self.velocity[1] < 0:
@@ -244,6 +274,10 @@ class Block(pygame.sprite.Sprite):
 
     def render(self, surface):
         surface.blit(self.image, self.rect)
+    
+    def get_hit(self):
+        self.level.score += 8
+        self.kill()
 
 
 class Powerup():
