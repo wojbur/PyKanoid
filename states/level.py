@@ -4,6 +4,7 @@ from math import cos, sin
 from math import pi as PI
 from csv import reader
 from time import sleep
+import random
 
 from states.state import State
 
@@ -17,7 +18,7 @@ class GameLevel(State):
 
         self.game = game
         
-        self.stage = 2
+        self.stage = 1
         self.lives = 2
         self.score = 0
         self.is_paused = False
@@ -56,6 +57,7 @@ class GameLevel(State):
     def update(self, delta_time, keys):
         # test spawning multiple balls
         if keys['up']:
+
             self.spawn_ball(self.player.rect.centerx, self.player.rect.top, PI, 400)
         if keys['escape']:
             self.exit_state()
@@ -63,6 +65,7 @@ class GameLevel(State):
         self.ball_group.update(delta_time, keys)
         self.game.reset_keys()
         self.check_stage_completion()
+        print(1/delta_time)
 
     def render(self, surface):
         surface.fill((0, 0, 0))
@@ -82,8 +85,14 @@ class GameLevel(State):
         # Create blocks grid
         for i in range(len(stage_layout)):
             for j in range(len(stage_layout[i])):
-                if stage_layout[i][j]:
+                if 'STD' in stage_layout[i][j]:
                     Block(self.game, self, stage_layout[i][j], 40+j*60, 80+i*30)
+                if 'SPD' in stage_layout[i][j]:
+                    SpeedUpBlock(self.game, self, stage_layout[i][j], 40+j*60, 80+i*30)
+                if 'SLD' in stage_layout[i][j]:
+                    SlowDownBlock(self.game, self, stage_layout[i][j], 40+j*60, 80+i*30)
+                if 'ICE' in stage_layout[i][j]:
+                    IceBlock(self.game, self, stage_layout[i][j], 40+j*60, 80+i*30)
     
     def lose_live(self):
         if self.lives == 0:
@@ -102,6 +111,7 @@ class GameLevel(State):
     
     def start_new_stage(self, stage):
         self.next_stage_sound.play()
+        sleep(0.5)
 
         for ball in self.ball_group:
             ball.kill()
@@ -112,7 +122,6 @@ class GameLevel(State):
 
     
     def spawn_ball(self, x, y, angle, speed):
-        print('spawn ballz')
         Ball(self.game, self, x, y, angle, speed)
     
     def reset(self):
@@ -176,7 +185,8 @@ class Ball(pygame.sprite.Sprite):
         super().__init__()
         self.game = game
         self.level = level
-        self.max_speed = 800
+        self.max_speed = 1000
+        self.min_speed = 300
 
         self.image = pygame.image.load(PurePath(game.sprites_dir, 'ball', 'ball.png'))
         self.rect = self.image.get_rect()
@@ -230,25 +240,19 @@ class Ball(pygame.sprite.Sprite):
         collision_tolerance = 8
         collided_blocks = pygame.sprite.spritecollide(self, self.level.block_group, False)
         if collided_blocks:
-            self.level.hit_block_sound.play()
             # Check both ball position and direction to ensure no multiple collision detections occur
             # Collision from the bottom
             if abs(collided_blocks[0].rect.bottom - self.rect.top) < collision_tolerance and self.velocity[1] < 0:
-                self.velocity[1] = abs(self.velocity[1])
-                collided_blocks[0].get_hit()
+                collided_blocks[0].get_hit(self, 'bottom')
             # Collision from the top
             if abs(collided_blocks[0].rect.top - self.rect.bottom) < collision_tolerance and self.velocity[1] > 0:
-                self.velocity[1] = -abs(self.velocity[1])
-                collided_blocks[0].get_hit()
+                collided_blocks[0].get_hit(self, 'top')
             # Collision from the left
             if abs(collided_blocks[0].rect.left - self.rect.right) < collision_tolerance and self.velocity[0] > 0:
-
-                self.velocity[0] = -abs(self.velocity[0])
-                collided_blocks[0].get_hit()
+                collided_blocks[0].get_hit(self, 'left')
             # Collision from the right
             if abs(collided_blocks[0].rect.right - self.rect.left) < collision_tolerance and self.velocity[0] < 0:
-                self.velocity[0] = abs(self.velocity[0])
-                collided_blocks[0].get_hit()
+                collided_blocks[0].get_hit(self, 'right')
   
             
     def wall_collide(self):
@@ -278,6 +282,7 @@ class Block(pygame.sprite.Sprite):
         self.game = game
         self.level = level
         self.code = code
+        self.hit_sound = pygame.mixer.Sound(PurePath(self.game.sounds_dir, 'hit_block.wav'))
 
         self.image = pygame.image.load(PurePath(game.sprites_dir, 'blocks', f'{self.code}.png'))
         self.rect = self.image.get_rect()
@@ -288,9 +293,54 @@ class Block(pygame.sprite.Sprite):
     def render(self, surface):
         surface.blit(self.image, self.rect)
     
-    def get_hit(self):
+    def get_hit(self, ball, side):
+        self.hit_sound.play()
         self.level.score += 8
         self.kill()
+        if side == 'bottom':
+            ball.velocity[1] = abs(ball.velocity[1])
+        elif side == 'top':
+            ball.velocity[1] = -abs(ball.velocity[1])
+        elif side == 'left':
+            ball.velocity[0] = -abs(ball.velocity[0])
+        elif side == 'right':
+            ball.velocity[0] = abs(ball.velocity[0])
+
+class SpeedUpBlock(Block):
+    def __init__(self, game, level, code, x, y):
+        super().__init__(game, level, code, x, y)
+        self.hit_sound = pygame.mixer.Sound(PurePath(self.game.sounds_dir, 'speed_up.wav'))
+    
+    def get_hit(self, ball, side):
+        ball.speed = ball.max_speed
+        ball.velocity = vector(sin(ball.angle)*ball.speed, cos(ball.angle)*ball.speed)
+        super().get_hit(ball, side)
+
+class SlowDownBlock(Block):
+    def __init__(self, game, level, code, x, y):
+        super().__init__(game, level, code, x, y)
+        self.hit_sound = pygame.mixer.Sound(PurePath(self.game.sounds_dir, 'slow_down.wav'))
+    
+    def get_hit(self, ball, side):
+        if ball.speed*0.5 > ball.min_speed:
+            ball.speed *= 0.5
+        else:
+            ball.speed = ball.min_speed
+        ball.velocity = vector(sin(ball.angle)*ball.speed, cos(ball.angle)*ball.speed)
+        super().get_hit(ball, side)
+
+class IceBlock(Block):
+    def __init__(self, game, level, code, x, y):
+        super().__init__(game, level, code, x, y)
+        self.hit_sound = pygame.mixer.Sound(PurePath(self.game.sounds_dir, 'ice_break.wav'))
+    
+    def get_hit(self, ball, side):
+        super().get_hit(ball, side)
+        ball_angle = random.uniform(0, 2*PI)
+        self.level.spawn_ball(self.rect.centerx, self.rect.centery, ball_angle, ball.speed)
+
+
+
 
 
 class Powerup():
