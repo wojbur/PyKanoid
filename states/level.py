@@ -3,6 +3,7 @@ from pathlib import PurePath
 from math import cos, sin
 from math import pi as PI
 from csv import reader
+from time import sleep
 
 from states.state import State
 
@@ -36,6 +37,7 @@ class GameLevel(State):
         self.hit_block_sound = pygame.mixer.Sound(PurePath(self.game.sounds_dir, 'hit_block.wav'))
         self.hit_wall_sound = pygame.mixer.Sound(PurePath(self.game.sounds_dir, 'hit_wall.wav'))
         self.lose_live_sound = pygame.mixer.Sound(PurePath(self.game.sounds_dir, 'lose_live.wav'))
+        self.next_stage_sound = pygame.mixer.Sound(PurePath(self.game.sounds_dir, 'next_stage.wav'))
 
         # Load HUD images
         self.sidebar = pygame.image.load(PurePath(self.game.sprites_dir, 'other', 'sidebar.png'))
@@ -55,19 +57,12 @@ class GameLevel(State):
         # test spawning multiple balls
         if keys['up']:
             self.spawn_ball(self.player.rect.centerx, self.player.rect.top, PI, 400)
-
-        if self.is_paused:
-            if keys['escape']:
-                self.exit_state()
-            if keys['enter']:
-                self.reset()
-                self.is_paused = False
-        else:
-            if keys['escape']:
-                self.exit_state()
-            self.player.update(delta_time, keys)
-            self.ball_group.update(delta_time, keys)
-            self.game.reset_keys()
+        if keys['escape']:
+            self.exit_state()
+        self.player.update(delta_time, keys)
+        self.ball_group.update(delta_time, keys)
+        self.game.reset_keys()
+        self.check_stage_completion()
 
     def render(self, surface):
         surface.fill((0, 0, 0))
@@ -78,7 +73,7 @@ class GameLevel(State):
     
     def create_block_grid(self, stage):
         # Load stage set CSV file
-        with open(PurePath('stages', 'standard_set.csv')) as file:
+        with open(PurePath('stages', 'test_set1.csv')) as file:
             csv_reader = reader(file, delimiter=";")
             stage_layouts = list(csv_reader)
             start_row = stage + (stage-1)*20
@@ -95,8 +90,26 @@ class GameLevel(State):
             self.game_over()
         else:
             self.lose_live_sound.play()
-            self.is_paused = True
+            sleep(1)
             self.lives -= 1
+            self.reset()
+    
+    def check_stage_completion(self):
+        if len(self.block_group) == 0:
+            self.score += 1000*self.stage
+            self.stage += 1
+            self.start_new_stage(self.stage)
+    
+    def start_new_stage(self, stage):
+        self.next_stage_sound.play()
+
+        for ball in self.ball_group:
+            ball.kill()
+
+        self.player.is_magnetic = True
+        self.ball = Ball(self.game, self, self.player.rect.centerx, self.player.rect.top, PI, 400)
+        self.create_block_grid(stage)
+
     
     def spawn_ball(self, x, y, angle, speed):
         print('spawn ballz')
