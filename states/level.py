@@ -18,7 +18,7 @@ class GameLevel(State):
 
         self.game = game
         
-        self.stage = 1
+        self.stage = 2
         self.lives = 2
         self.score = 0
         self.is_paused = False
@@ -93,6 +93,8 @@ class GameLevel(State):
                     SlowDownBlock(self.game, self, stage_layout[i][j], 40+j*60, 80+i*30)
                 if 'ICE' in stage_layout[i][j]:
                     IceBlock(self.game, self, stage_layout[i][j], 40+j*60, 80+i*30)
+                if 'BSHI' in stage_layout[i][j]:
+                    BottomShieldBlock(self.game, self, stage_layout[i][j], 40+j*60, 80+i*30)
     
     def lose_live(self):
         if self.lives == 0:
@@ -338,6 +340,25 @@ class IceBlock(Block):
         super().get_hit(ball, side)
         ball_angle = random.uniform(0, 2*PI)
         self.level.spawn_ball(self.rect.centerx, self.rect.centery, ball_angle, ball.speed)
+
+class BottomShieldBlock(Block):
+    def __init__(self, game, level, code, x, y):
+        super().__init__(game, level, code, x, y)
+        self.hit_shield_sound = pygame.mixer.Sound(PurePath(self.game.sounds_dir, 'hit_shield.wav'))
+    def get_hit(self, ball, side):
+        if side == 'bottom':
+            ball.velocity[1] = abs(ball.velocity[1])
+            self.hit_shield_sound.play()
+        else:
+            self.hit_sound.play()
+            self.level.score += 15
+            self.kill()
+            if side == 'top':
+                ball.velocity[1] = -abs(ball.velocity[1])
+            elif side == 'left':
+                ball.velocity[0] = -abs(ball.velocity[0])
+            elif side == 'right':
+                ball.velocity[0] = abs(ball.velocity[0])
 
 
 
